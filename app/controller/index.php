@@ -209,19 +209,13 @@ class controller{
             if(isset($_GET['id'])){
                     $gh = new giohang();
                     $sps = new sanpham();
-                    //lấy id
                     $sps->setId($_GET['id']);
                     $sp_mot = $sps->getmotsp($sps->getId());
-                    //thêm lấy giá trị của sản phẩm
                     $sp = [$sp_mot[0]['id_sp'], $sp_mot[0]['Name'], $sp_mot[0]['Price'],1, $sp_mot[0]['image']];
-                    //kiểm tra vị trí
                     $vitri = $gh->kiemtra($sp);
-                 
                     if($vitri == -1){
-                        //chưa có thì mảng rỗng
                         $_SESSION['giohang'][] = $sp;
                     } else {
-                        //có thì tăng vị trí
                         $_SESSION['giohang'][$vitri][3]++;
          
                 }
@@ -267,8 +261,7 @@ class controller{
             }
             header('Location:/giohang');
         }
-        
- //tìm kiếm     
+            
 
 
 
@@ -386,45 +379,37 @@ public function thanhtoansp()
                 $gia = $item[2];
                 $sl = $item[3];
 
-                // Thực hiện thêm đơn hàng
                 $sqlDonHang = "INSERT INTO donhang (id_sp, thanh_toan, hanh_trinh, ngaydat, ten_sp, gia_sp, soluong)
                     VALUES (?, ?, ?, ?, ?, ?, ?)";
                 $stmt = $this->conn->prepare($sqlDonHang);
                 $stmt->execute([$id_sp, $phuongthuc, $hanhtrinh, $ngaydat, $ten, $gia, $sl]);
 
                 $lastOrderId = $this->conn->lastInsertId();
-
-                // Cập nhật tổng đơn hàng
                 $sqlUpdateTongTien = "UPDATE donhang SET tongdh = ? WHERE id_dh = ?";
                 $stmt = $this->conn->prepare($sqlUpdateTongTien);
                 $stmt->execute([$totalAmount, $lastOrderId]);
 
-                // Giảm số lượng sản phẩm
                 $sqlGiamSoLuong = "UPDATE sanpham SET Mount = Mount - ? WHERE id_sp = ?";
                 $stmt = $this->conn->prepare($sqlGiamSoLuong);
                 $stmt->execute([$sl, $id_sp]);
             }
 
-            // Thực hiện thêm chi tiết đơn hàng
+
             $sqlChiTiet = "INSERT INTO dh_chitiet (id_user, id_dh, diaChi, nguoiNhan, email, sdt, ngaydat) 
                 VALUES (?, ?, ?, ?, ?, ?, ?)";
             $stmt = $this->conn->prepare($sqlChiTiet);
             $stmt->execute([$id_user, $lastOrderId, $diachi, $nguoinhan, $email, $phone, $ngaydat]);
 
             $this->conn->commit();
-
             unset($_SESSION['giohang']);
-            
-            // Chuyển hướng sau khi hoàn tất
             header('Location: /donhang?id=' . $_SESSION['objuser']['id_user']);
-            exit; // Đảm bảo dừng thực thi tiếp theo sau chuyển hướng
+            exit; 
 
         } catch (Exception $e) {
             $this->conn->rollBack();
             echo "Lỗi: " . $e->getMessage();
         }
 
-        // Bao gồm file gửi email sau khi hoàn tất tất cả các thao tác
         include __DIR__ . "/../view/guimail.php";
 
     } else {
